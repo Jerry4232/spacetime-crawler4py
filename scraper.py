@@ -1,7 +1,19 @@
 import re
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+MAX_PAGES = 5   # change this for testing
+visited_count = 0
+
 def scraper(url, resp):
+    # TODO: delete this section when you want to run the crawler in full
+    global visited_count
+    if visited_count >= MAX_PAGES:
+        return []   # stop expanding frontier
+    visited_count += 1
+    # TODO: delete until here
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -15,7 +27,19 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    if (resp.status != 200 or resp.raw_response is None):
+        return list()
+    
+    result_links = []
+    content = resp.raw_response.content
+    soup = BeautifulSoup(content, "lxml")
+
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag.get("href")
+        absolute_url = urljoin(url, href)
+
+        result_links.append(absolute_url)
+    return result_links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
