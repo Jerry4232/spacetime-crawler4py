@@ -16,6 +16,8 @@ def is_valid(url):
         ):
             return False
 
+        path = parsed.path.lower()
+
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -25,16 +27,22 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",
-            parsed.path.lower()
+            path
         ):
             return False
 
-
-        if parsed.path.count("/") > 10:
+        if path.count("/") > 10:
             return False
 
-        parts = parsed.path.split("/")
-        if len(parts) != len(set(parts)):
+        parts = [part for part in path.split("/") if part]
+        for i in range(len(parts) - 2):
+            if parts[i] == parts[i + 1] == parts[i + 2]:
+                return False
+
+        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
+            return False
+
+        if "calendar" in path and ("month=" in parsed.query.lower() or "year=" in parsed.query.lower()):
             return False
 
         if parsed.query.count("&") > 5:
