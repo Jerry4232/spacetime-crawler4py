@@ -1,59 +1,74 @@
-"""
-File: analytics.py (Create this new file) 
-Goal: Extract text and count stats for the report. 
-To-Do:
-1.	Get Plain Text: Write a function to strip all HTML tags (like <div>, <script>) 
-    from the content to leave only human-readable text.
-2.	Word Count: Count the 50 most common words, ignoring "stop words" 
-    (like "the", "is", "at").
-3.	Subdomain Count: Track how many unique URLs belong to each subdomain 
-    (e.g., vision.ics.uci.edu vs wics.ics.uci.edu).
-"""
+# analytics.py
+
 from bs4 import BeautifulSoup
-from collections import Counter
+from collections import Counter, defaultdict
+from urllib.parse import urlparse, urldefrag
 import re
-from urllib.parse import urlparse
-from collections import defaultdict
 
-def get_plain_text(html_content):
-    """
-    Strip HTML tags from the content to get plain text.
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return soup.get_text(separator=' ', strip=True)
 
-def count_common_words(text, stop_words):
-    """
-    Count the 50 most common words in the text, ignoring stop words.
-    """
-    words = re.findall(r'\b\w+\b', text.lower())
-    filtered_words = [word for word in words if word not in stop_words]
-    word_counts = Counter(filtered_words)
-    return word_counts.most_common(50)
+class Analytics:
+    def __init__(self):
+        self.unique_urls = set()
+        self.word_counts = Counter()
+        self.subdomain_urls = defaultdict(set)
+        self.longest_page_url = None
+        self.longest_page_word_count = 0
 
-def count_subdomains(urls):
-    """
-    Count how many unique URLs belong to each subdomain.
-    """
-    subdomain_counts = defaultdict(set)
-    for url in urls:
-        parsed_url = urlparse(url)
-        subdomain = parsed_url.netloc
-        subdomain_counts[subdomain].add(url)
-    return {subdomain: len(urls) for subdomain, urls in subdomain_counts.items()}
+        self.stop_words = set([
+            "the", "is", "at", "which", "on", "and", "a", "an", "of",
+            "to", "in", "for", "with", "by", "as", "from", "that",
+            "this", "it", "be", "are", "was", "were", "or", "but"
+        ])
 
-# Example usage:
-if __name__ == "__main__":
-    html_content = "<html><body><h1>Example Page</h1><p>This is an example page.</p></body></html>"
-    stop_words = set(["the", "is", "at", "which", "on", "and"])
-    
-    plain_text = get_plain_text(html_content)
-    print("Plain Text:", plain_text)
-    
-    common_words = count_common_words(plain_text, stop_words)
-    print("Common Words:", common_words)
-    
-    urls = ["http://vision.ics.uci.edu/page1", "http://vision.ics.uci.edu/page2", 
-            "http://wics.ics.uci.edu/page1"]
-    subdomain_counts = count_subdomains(urls)
-    print("Subdomain Counts:", subdomain_counts)
+    def get_plain_text(self, html_content):
+        soup = BeautifulSoup(html_content, "lxml")
+
+        # remove non-human text
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
+
+        return soup.get_text(separator=" ", strip=True)
+
+    def tokenize(self, text):
+        words = re.findall(r"[a-zA-Z]+", text.lower())
+        return [w for w in words if w not in self.stop_words and len(w) > 1]
+
+    def process_page(self, url, html_content):
+        # normalize URL by removing #fragment
+        url, _ = urldefrag(url)
+
+        # avoid double counting same page
+        if url in self.unique_urls:
+            return
+
+        self.unique_urls.add(url)
+
+        text = self.get_plain_text(html_content)
+        words = self.tokenize(text)
+
+        # top 50 words across ALL pages
+        self.word_counts.update(words)
+
+        # longest page
+        if len(words) > self.longest_page_word_count:
+            self.longest_page_url = url
+            self.longest_page_word_count = len(words)
+
+        # subdomain count
+        subdomain = urlparse(url).netloc.lower()
+        self.subdomain_urls[subdomain].add(url)
+
+    def print_report(self):
+        print("Unique pages:", len(self.unique_urls))
+
+        print("Longest page:")
+        print(self.longest_page_url, self.longest_page_word_count)
+
+        print("Top 50 words:")
+        for word, count in self.word_counts.most_common(50):
+            print(word, count)
+
+        print("Subdomains:")
+        for subdomain in sorted(self.subdomain_urls):
+            print(subdomain + ",", len(self.subdomain_urls[subdomain]))
+            

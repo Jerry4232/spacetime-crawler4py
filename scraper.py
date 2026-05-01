@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urldefrag
 from validator import is_valid
-from analytics import *
+from analytics import Analytics
 
-MAX_PAGES = 5   # change this for testing
+ANALYTICS = Analytics()
+
+MAX_PAGES = 10   # change this for testing
 visited_count = 0
 
 def scraper(url, resp):
@@ -34,13 +36,18 @@ def extract_next_links(url, resp):
         return list()
     
     result_links = []
-    content = resp.raw_response.content
-    soup = BeautifulSoup(content, "lxml")
 
+    try:
+        content = resp.raw_response.content
+        page_url = resp.raw_response.url
+        ANALYTICS.process_page(page_url, resp.raw_response.content)
+        soup = BeautifulSoup(content, "lxml")
+    except:
+        return list()
+    
     for a_tag in soup.find_all("a", href=True):
         href = a_tag.get("href")
-        absolute_url = urljoin(url, href)
-
+        absolute_url = urljoin(url, href).strip()
         result_links.append(absolute_url)
     return result_links
 
