@@ -1,17 +1,11 @@
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urldefrag
 from validator import is_valid
 from analytics import *
 
-MAX_PAGES = 5   # change this for testing
-visited_count = 0
-
 def scraper(url, resp):
     # TODO: delete this section when you want to run the crawler in full
-    global visited_count
-    if visited_count >= MAX_PAGES:
-        return []   # stop expanding frontier
-    visited_count += 1
+    # Deleted
     # TODO: delete until here
 
     if not is_valid_response(resp):
@@ -34,16 +28,33 @@ def extract_next_links(url, resp):
         return list()
     
     result_links = []
-    content = resp.raw_response.content
-    soup = BeautifulSoup(content, "lxml")
+
+    try:
+        content = resp.raw_response.content
+        soup = BeautifulSoup(content, "lxml")
+    except Exception:
+        return list()
 
     for a_tag in soup.find_all("a", href=True):
         href = a_tag.get("href")
+
+        if not href:
+            continue
+
         absolute_url = urljoin(url, href)
+        clean_url, _ = urldefrag(absolute_url)
+        clean_url = clean_url.strip()
 
-        result_links.append(absolute_url)
-    return result_links
+        if clean_url:
+            result_links.append(clean_url)
 
+    return list(dict.fromkeys(result_links))
 
 def is_valid_response(resp):
-    return resp.status == 200 and resp.raw_response is not None
+    return (
+        resp is not None
+        and resp.status == 200
+        and resp.raw_response is not None
+        and resp.raw_response.content is not None
+        and len(resp.raw_response.content) > 0
+    )
