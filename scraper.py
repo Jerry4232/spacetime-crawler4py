@@ -2,6 +2,10 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urldefrag
 from validator import is_valid
 from analytics import Analytics
+from similarity import exact_duplicate, near_duplicate
+
+seen_hashes = set()
+seen_fps = []
 
 ANALYTICS = Analytics()
 
@@ -18,6 +22,16 @@ def scraper(url, resp):
 
     if not is_valid_response(resp):
         return list()
+    
+    content = resp.raw_response.content.decode("utf-8", errors="ignore")
+
+    # exact duplicate
+    if exact_duplicate(content, seen_hashes):
+        return []
+
+    # near duplicate
+    if near_duplicate(content, seen_fps):
+        return []
     
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
