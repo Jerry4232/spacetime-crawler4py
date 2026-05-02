@@ -1,8 +1,24 @@
-import re
-from urllib.parse import urlparse
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urldefrag
 from validator import is_valid
+from analytics import Analytics
+
+ANALYTICS = Analytics()
+
+MAX_PAGES = 10   # change this for testing
+visited_count = 0
 
 def scraper(url, resp):
+    # TODO: delete this section when you want to run the crawler in full
+    global visited_count
+    if visited_count >= MAX_PAGES:
+        return []   # stop expanding frontier
+    visited_count += 1
+    # TODO: delete until here
+
+    if not is_valid_response(resp):
+        return list()
+    
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -16,15 +32,25 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    if not is_valid_response(resp):
+        return list()
+    
+    result_links = []
 
-if __name__ == "__main__":
-    test_urls = [
-        "https://www.ics.uci.edu",
-        "https://www.google.com",
-        "https://www.ics.uci.edu/test.pdf",
-        "https://www.ics.uci.edu/a/a/a/a/a/a/a/a/a/a/a"
-    ]
+    try:
+        content = resp.raw_response.content
+        page_url = resp.raw_response.url
+        ANALYTICS.process_page(page_url, resp.raw_response.content)
+        soup = BeautifulSoup(content, "lxml")
+    except:
+        return list()
+    
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag.get("href")
+        absolute_url = urljoin(url, href).strip()
+        result_links.append(absolute_url)
+    return result_links
 
-    for url in test_urls:
-        print(url, is_valid(url))
+
+def is_valid_response(resp):
+    return resp.status == 200 and resp.raw_response is not None
