@@ -53,20 +53,15 @@ class Analytics:
         words = re.findall(r"[a-zA-Z]+", text.lower())
         return [w for w in words if w not in STOP_WORDS and len(w) > 1]
 
-    def process_page(self, url, html_content):
-        # normalize URL by removing #fragment
+    def process_page(self, url, plain_text):
         url, _ = urldefrag(url)
-
-        # avoid double counting same page
         if url in self.unique_urls:
             return
-
         self.unique_urls.add(url)
 
-        text = self.get_plain_text(html_content)
-        words = self.tokenize(text)
+        words = self.tokenize(plain_text)
 
-        # top 50 words across ALL pages
+        # top 50 words
         self.word_counts.update(words)
 
         # longest page
