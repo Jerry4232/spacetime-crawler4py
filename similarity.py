@@ -1,3 +1,6 @@
+# similarity.py
+
+
 def tokenize(text):
     cleaned = ""
     for ch in text.lower():
@@ -16,6 +19,11 @@ def checksum(text):
 
 
 def exact_duplicate(text, seen_hashes):
+    """
+    Check if the checksum of the text has been seen before.
+    If it has, return True. 
+    Otherwise, add the checksum to seen_hashes and return False.
+    """
     h = checksum(text)
     if h in seen_hashes:
         return True
@@ -48,6 +56,12 @@ def similarity(fp1, fp2):
 
 
 def near_duplicate(text, seen_fps, threshold=0.9):
+    """
+    Check if the fingerprint of the text is similar to 
+        any of the fingerprints in seen_fps.
+    If it is, return True. 
+    Otherwise, add the fingerprint to seen_fps and return False.
+    """
     fp = fingerprints(text)
 
     for old_fp in seen_fps:
