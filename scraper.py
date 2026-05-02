@@ -9,18 +9,7 @@ ANALYTICS = Analytics()
 seen_hashes = set()
 seen_fps = []
 
-
-MAX_PAGES = 10   # change this for testing
-visited_count = 0
-
 def scraper(url, resp):
-    # TODO: delete this section when you want to run the crawler in full
-    global visited_count
-    if visited_count >= MAX_PAGES:
-        return []   # stop expanding frontier
-    visited_count += 1
-    # TODO: delete until here
-
     if not is_valid_response(resp):
         return []
     
@@ -47,7 +36,7 @@ def extract_next_links(url, resp):
     if not is_valid_response(resp):
         return []
 
-    result_links = []
+    result_links = set()
 
     try:
         content = resp.raw_response.content
@@ -59,10 +48,16 @@ def extract_next_links(url, resp):
     
     for a_tag in soup.find_all("a", href=True):
         href = a_tag.get("href")
-        absolute_url = urljoin(url, href).strip()
+        if not href:
+            continue
+        href = href.strip()
+        if href.startswith(("mailto:", "javascript:", "tel:")):
+            continue
+        absolute_url = urljoin(page_url, href).strip()
         clean_url = urldefrag(absolute_url)[0]
-        result_links.append(clean_url)
-    return result_links
+        if is_valid(clean_url):
+            result_links.add(clean_url)
+    return list(result_links)
 
 
 def is_valid_response(resp):
