@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 
+PATH_DEPTH_LIMIT = 10
+
 def is_valid(url):
     try:
         parsed = urlparse(url)
@@ -17,6 +19,7 @@ def is_valid(url):
             return False
 
         path = parsed.path.lower()
+        query = parsed.query.lower()
 
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -31,7 +34,7 @@ def is_valid(url):
         ):
             return False
 
-        if path.count("/") > 10:
+        if path.count("/") > PATH_DEPTH_LIMIT:
             return False
 
         parts = [part for part in path.split("/") if part]
@@ -42,10 +45,10 @@ def is_valid(url):
         if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
             return False
 
-        if "calendar" in path and ("month=" in parsed.query.lower() or "year=" in parsed.query.lower()):
+        if "calendar" in path and ("month=" in query or "year=" in query):
             return False
 
-        if parsed.query.count("&") > 5:
+        if query.count("&") > 5:
             return False
 
         return True
