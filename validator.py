@@ -76,14 +76,7 @@ def is_valid(url):
         if parsed.query.count("&") > 5:
             return False
 
-        return True
-    
-        #Block DokuWiki traps: ?do=login/edit/diff, ?rev=timestamp, /lib/ resources
-        query_lower = parsed.query.lower()
-        if "do=" in query_lower or "rev=" in query_lower:
-            return False
-        if "/lib/exe/" in path or "/lib/tpl/" in path:
-            return False      
+        return True    
           
     except TypeError:
         return False
