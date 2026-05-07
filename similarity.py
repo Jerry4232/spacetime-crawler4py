@@ -55,4 +55,8 @@ def near_duplicate(text, seen_fps, threshold=0.9):
             return True
 
     seen_fps.append(fp)
+
+    if len(seen_fps) > 1000:
+        seen_fps.pop(0)
+        
     return False

@@ -17,6 +17,7 @@ def is_valid(url):
             return False
 
         path = parsed.path.lower()
+        query_lower = parsed.query.lower()
 
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -30,6 +31,33 @@ def is_valid(url):
             path
         ):
             return False
+        
+        if "doku.php" in path and (
+            "backup" in path
+            or "backups" in path
+            or "history" in path
+            or "revision" in path
+            or "revisions" in path
+            or "diff" in path
+            or "restore" in path
+        ):
+            return False
+        
+        if (
+            "do=edit" in query
+            or "do=diff" in query
+            or "do=history" in query
+            or "do=revisions" in query
+            or "do=index" in query
+            or "do=login" in query
+            or "do=export" in query
+            or "do=backlink" in query
+            or "rev=" in query
+        ):
+            return False
+        
+        if "/lib/exe/" in path or "/lib/tpl/" in path:
+            return False
 
         if path.count("/") > 10:
             return False
@@ -42,7 +70,7 @@ def is_valid(url):
         if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
             return False
 
-        if "calendar" in path and ("month=" in parsed.query.lower() or "year=" in parsed.query.lower()):
+        if "calendar" in path and ("month=" in query or "year=" in query):
             return False
 
         if parsed.query.count("&") > 5:
