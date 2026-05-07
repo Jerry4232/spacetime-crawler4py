@@ -4,33 +4,22 @@ from validator import is_valid
 from analytics import Analytics
 from similarity import exact_duplicate, near_duplicate
 
+ANALYTICS = Analytics()
+
 seen_hashes = set()
 seen_fps = []
 
-ANALYTICS = Analytics()
-
-MAX_PAGES = 10   # change this for testing
-visited_count = 0
-
 def scraper(url, resp):
-    # TODO: delete this section when you want to run the crawler in full
-    global visited_count
-    if visited_count >= MAX_PAGES:
-        return []   # stop expanding frontier
-    visited_count += 1
-    # TODO: delete until here
-
     if not is_valid_response(resp):
-        return list()
+        return []
     
     content = resp.raw_response.content.decode("utf-8", errors="ignore")
 
-    # exact duplicate
     if exact_duplicate(content, seen_hashes):
         return []
 
     # near duplicate
-    if near_duplicate(content, seen_fps, threshold=0.97):
+    if near_duplicate(content, seen_fps):
         return []
     
     links = extract_next_links(url, resp)
@@ -47,24 +36,36 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     if not is_valid_response(resp):
-        return list()
-    
-    result_links = []
+        return []
+
+    result_links = set()
 
     try:
         content = resp.raw_response.content
         page_url = resp.raw_response.url
-        ANALYTICS.process_page(page_url, resp.raw_response.content)
+        ANALYTICS.process_page(page_url, content)
         soup = BeautifulSoup(content, "lxml")
-    except:
-        return list()
+    except Exception:
+        return []
     
     for a_tag in soup.find_all("a", href=True):
         href = a_tag.get("href")
-        absolute_url = urljoin(url, href).strip()
-        result_links.append(absolute_url)
-    return result_links
+        if not href:
+            continue
+        href = href.strip()
+        if href.startswith(("mailto:", "javascript:", "tel:")):
+            continue
+        absolute_url = urljoin(page_url, href).strip()
+        clean_url = urldefrag(absolute_url)[0]
+        if is_valid(clean_url):
+            result_links.add(clean_url)
+    return list(result_links)
 
 
 def is_valid_response(resp):
-    return resp.status == 200 and resp.raw_response is not None
+    return(
+        resp.status == 200
+        and resp.raw_response is not None
+        and resp.raw_response.content is not None
+        and len(resp.raw_response.content) > 0
+    )

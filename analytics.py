@@ -53,21 +53,23 @@ class Analytics:
         words = re.findall(r"[a-zA-Z]+", text.lower())
         return [w for w in words if w not in STOP_WORDS and len(w) > 1]
 
-    def process_page(self, url, plain_text):
+    def process_page(self, url, html_content):
         url, _ = urldefrag(url)
         if url in self.unique_urls:
             return
+        
         self.unique_urls.add(url)
-
+        plain_text = self.get_plain_text(html_content)
         words = self.tokenize(plain_text)
 
         # top 50 words
         self.word_counts.update(words)
 
         # longest page
-        if len(words) > self.longest_page_word_count:
+        word_count = len(re.findall(r"[a-zA-Z]+", plain_text.lower()))
+        if word_count > self.longest_page_word_count:
             self.longest_page_url = url
-            self.longest_page_word_count = len(words)
+            self.longest_page_word_count = word_count
 
         # subdomain count
         subdomain = urlparse(url).netloc.lower()
