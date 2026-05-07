@@ -22,6 +22,12 @@ def scraper(url, resp):
     if near_duplicate(content, seen_fps, threshold=0.97):
         return []
     
+    try:
+        page_url = resp.raw_response.url
+        ANALYTICS.process_page(page_url, resp.raw_response.content)
+    except Exception:
+        pass
+    
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -43,7 +49,6 @@ def extract_next_links(url, resp):
     try:
         content = resp.raw_response.content
         page_url = resp.raw_response.url
-        ANALYTICS.process_page(page_url, content)
         soup = BeautifulSoup(content, "lxml")
     except Exception:
         return []
