@@ -19,7 +19,7 @@ def scraper(url, resp):
         return []
 
     # near duplicate
-    if near_duplicate(content, seen_fps, thrshold=0.97):
+    if near_duplicate(content, seen_fps, threshold=0.97):
         return []
     
     links = extract_next_links(url, resp)

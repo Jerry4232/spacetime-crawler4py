@@ -17,7 +17,7 @@ def is_valid(url):
             return False
 
         path = parsed.path.lower()
-        query_lower = parsed.query.lower()
+        query = parsed.query.lower()
 
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -66,9 +66,6 @@ def is_valid(url):
         for i in range(len(parts) - 2):
             if parts[i] == parts[i + 1] == parts[i + 2]:
                 return False
-
-        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
-            return False
 
         if "calendar" in path and ("month=" in query or "year=" in query):
             return False
