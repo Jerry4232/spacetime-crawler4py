@@ -65,11 +65,12 @@ class Frontier(object):
                 self.to_be_downloaded.append(url)
     
     def mark_url_complete(self, url):
-        urlhash = get_urlhash(url)
-        if urlhash not in self.save:
-            # This should not happen.
-            self.logger.error(
-                f"Completed url {url}, but have not seen it before.")
-
+        with self.lock:
+            urlhash = get_urlhash(url)
+            if urlhash not in self.save:
+                # This should not happen.
+                self.logger.error(
+                    f"Completed url {url}, but have not seen it before.")
+                return
         self.save[urlhash] = (url, True)
         self.save.sync()
