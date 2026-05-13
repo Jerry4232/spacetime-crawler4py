@@ -69,6 +69,10 @@ def near_duplicate(text, seen_fps, threshold=0.9):
         if similarity(fp, old_fp) >= threshold:
             return True
 
+    if len(seen_fps) > RECENT_FPS_LIMIT:
+        seen_fps.pop(0)
+        
     seen_fps.append(fp)
+
     return False
 
