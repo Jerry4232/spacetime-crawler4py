@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 
+PATH_DEPTH_LIMIT = 10
+
 def is_valid(url):
     try:
         parsed = urlparse(url)
@@ -18,6 +20,7 @@ def is_valid(url):
 
         path = parsed.path.lower()
         query = parsed.query.lower()
+        query = parsed.query.lower()
 
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -31,35 +34,8 @@ def is_valid(url):
             path
         ):
             return False
-        
-        if "doku.php" in path and (
-            "backup" in path
-            or "backups" in path
-            or "history" in path
-            or "revision" in path
-            or "revisions" in path
-            or "diff" in path
-            or "restore" in path
-        ):
-            return False
-        
-        if (
-            "do=edit" in query
-            or "do=diff" in query
-            or "do=history" in query
-            or "do=revisions" in query
-            or "do=index" in query
-            or "do=login" in query
-            or "do=export" in query
-            or "do=backlink" in query
-            or "rev=" in query
-        ):
-            return False
-        
-        if "/lib/exe/" in path or "/lib/tpl/" in path:
-            return False
 
-        if path.count("/") > 10:
+        if path.count("/") > PATH_DEPTH_LIMIT:
             return False
 
         parts = [part for part in path.split("/") if part]
@@ -67,10 +43,13 @@ def is_valid(url):
             if parts[i] == parts[i + 1] == parts[i + 2]:
                 return False
 
+        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
+            return False
+
         if "calendar" in path and ("month=" in query or "year=" in query):
             return False
 
-        if parsed.query.count("&") > 5:
+        if query.count("&") > 5:
             return False
 
         return True    
