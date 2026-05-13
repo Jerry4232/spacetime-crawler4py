@@ -23,9 +23,9 @@ def scraper(url, resp):
         return []
     
     try:
-    page_url = urldefrag(resp.raw_response.url)[0]
-    if is_valid(page_url):
-        ANALYTICS.process_page(page_url, resp.raw_response.content)
+        page_url = urldefrag(resp.raw_response.url)[0]
+        if is_valid(page_url):
+            ANALYTICS.process_page(page_url, resp.raw_response.content)
     except Exception:
         pass
     
@@ -48,9 +48,9 @@ def extract_next_links(url, resp):
     result_links = set()
 
     try:
-    content = resp.raw_response.content
-    page_url = urldefrag(resp.raw_response.url)[0]
-    soup = BeautifulSoup(content, "lxml")
+        content = resp.raw_response.content
+        page_url = urldefrag(resp.raw_response.url)[0]
+        soup = BeautifulSoup(content, "lxml")
     except Exception:
         return []
     
