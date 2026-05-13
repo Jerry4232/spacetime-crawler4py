@@ -56,7 +56,7 @@ def similarity(fp1, fp2):
     return len(fp1 & fp2) / len(fp1 | fp2)
 
 
-def near_duplicate(text, seen_fps, threshold=0.9):
+def near_duplicate(text, seen_fps, threshold=0.97):
     """
     Check if the fingerprint of the text is similar to 
         any of the fingerprints in seen_fps.
@@ -69,9 +69,9 @@ def near_duplicate(text, seen_fps, threshold=0.9):
         if similarity(fp, old_fp) >= threshold:
             return True
 
-    if len(seen_fps) > RECENT_FPS_LIMIT:
+    if len(seen_fps) >= RECENT_FPS_LIMIT:
         seen_fps.pop(0)
-        
+
     seen_fps.append(fp)
 
     return False

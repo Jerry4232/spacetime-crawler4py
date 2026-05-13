@@ -56,6 +56,8 @@ def is_valid(url):
             or "tribe_" in query
             or "filter[" in query
             or "filter%5b" in query
+            or "printable=" in query
+            or "format=" in query
         ):
             return False
 
@@ -73,7 +75,7 @@ def is_valid(url):
         if "calendar" in path and ("month=" in query or "year=" in query):
             return False
 
-        if query.count("&") > 5:
+        if query.count("&") > 3:
             return False
 
         return True

@@ -23,7 +23,7 @@ def scraper(url, resp):
         return []
     
     try:
-        page_url = urldefrag(resp.raw_response.url)[0]
+        page_url = urldefrag(getattr(resp.raw_response, "url", resp.url))[0]
         if is_valid(page_url):
             ANALYTICS.process_page(page_url, resp.raw_response.content)
     except Exception:
@@ -49,7 +49,7 @@ def extract_next_links(url, resp):
 
     try:
         content = resp.raw_response.content
-        page_url = urldefrag(resp.raw_response.url)[0]
+        page_url = urldefrag(getattr(resp.raw_response, "url", resp.url))[0]
         soup = BeautifulSoup(content, "lxml")
     except Exception:
         return []
