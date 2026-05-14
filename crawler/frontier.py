@@ -1,8 +1,9 @@
 import os
 import shelve
 
-from threading import Thread, RLock
-from queue import Queue, Empty
+from threading import RLock
+import time
+from urllib.parse import urlparse
 
 from utils import get_logger, get_urlhash, normalize
 from scraper import is_valid
@@ -13,6 +14,7 @@ class Frontier(object):
         self.config = config
         self.to_be_downloaded = list()
         self.lock = RLock() 
+        self.domain_last_request = {}
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -49,11 +51,36 @@ class Frontier(object):
             f"total urls discovered.")
 
     def get_tbd_url(self):
-        with self.lock:
-            try:
-                return self.to_be_downloaded.pop(0)
-            except IndexError:
-                return None
+        while True:
+            with self.lock:
+                if not self.to_be_downloaded:
+                    return None
+
+                now = time.monotonic()
+                earliest_wait = None
+
+                for i, url in enumerate(self.to_be_downloaded):
+                    domain = urlparse(url).netloc.lower()
+                    last_time = self.domain_last_request.get(domain, 0)
+
+                    elapsed = now - last_time
+                    delay = float(self.config.time_delay)
+
+                    if elapsed >= delay:
+                        # Reserve this domain immediately before releasing lock.
+                        # This prevents another worker from taking same domain now.
+                        self.domain_last_request[domain] = now
+                        return self.to_be_downloaded.pop(i)
+
+                    wait_time = delay - elapsed
+                    if earliest_wait is None or wait_time < earliest_wait:
+                        earliest_wait = wait_time
+
+            # Do not hold the lock while sleeping.
+            if earliest_wait is not None:
+                time.sleep(earliest_wait)
+            else:
+                time.sleep(0.05)
 
     def add_url(self, url):
         with self.lock:
@@ -72,5 +99,5 @@ class Frontier(object):
                 self.logger.error(
                     f"Completed url {url}, but have not seen it before.")
                 return
-        self.save[urlhash] = (url, True)
-        self.save.sync()
+            self.save[urlhash] = (url, True)
+            self.save.sync()
