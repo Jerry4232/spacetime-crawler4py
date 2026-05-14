@@ -30,15 +30,15 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|xml|rss|atom"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
-            + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb|php$",
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
+            + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb|php)$",
             path
         ):
             return False
         
         bad_terms = ["login", "logout", "register", "reply", "comment", "restore"]
         if any(term in path or term in query for term in bad_terms):
-            return True
+            return False
         
         if path.count("/") > 10:
             return False
@@ -83,10 +83,6 @@ def is_valid(url):
             # Exclude paginated pages beyond page 3
             if m and int(m.group(1)) > 3:
                 return False
-        
-        # profile pages
-        if path.startswith("/people/") or path == "/people":
-            return False
         
         if netloc == "ics.uci.edu" and path.startswith("/~dhirschb/genealogy/"):
             return False
