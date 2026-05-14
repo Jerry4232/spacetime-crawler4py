@@ -29,6 +29,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|xml|rss|atom"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",
             path
         ):
@@ -37,7 +38,24 @@ def is_valid(url):
         bad_terms = ["login", "logout", "register", "reply", "comment", "restore"]
         if any(term in path or term in query for term in bad_terms):
             return True
+        
+        if path.count("/") > 10:
+            return False
 
+        parts = [part for part in path.split("/") if part]
+        for i in range(len(parts) - 2):
+            if parts[i] == parts[i + 1] == parts[i + 2]:
+                return False
+            
+        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
+            return False
+
+        if "calendar" in path and ("month=" in query or "year=" in query):
+            return False
+
+        if query.count("&") > 3:
+            return False
+        
         if "doku.php" in path and (
             "backup" in path
             or "backups" in path
@@ -66,23 +84,6 @@ def is_valid(url):
             return False
 
         if "/lib/exe/" in path or "/lib/tpl/" in path:
-            return False
-
-        if path.count("/") > 10:
-            return False
-
-        parts = [part for part in path.split("/") if part]
-        for i in range(len(parts) - 2):
-            if parts[i] == parts[i + 1] == parts[i + 2]:
-                return False
-            
-        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
-            return False
-
-        if "calendar" in path and ("month=" in query or "year=" in query):
-            return False
-
-        if query.count("&") > 3:
             return False
 
         return True
