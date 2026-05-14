@@ -82,7 +82,8 @@ def extract_next_links(url, resp):
 
 def is_valid_response(resp):
     return(
-        resp.status == 200
+        resp is not None
+        and resp.status == 200
         and resp.raw_response is not None
         and resp.raw_response.content is not None
         and len(resp.raw_response.content) > 0

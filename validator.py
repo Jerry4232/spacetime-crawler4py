@@ -42,11 +42,6 @@ def is_valid(url):
         
         if path.count("/") > 10:
             return False
-
-        parts = [part for part in path.split("/") if part]
-        for i in range(len(parts) - 2):
-            if parts[i] == parts[i + 1] == parts[i + 2]:
-                return False
             
         date_sep = r"[-/._]"
         date_patterns = [
@@ -65,6 +60,18 @@ def is_valid(url):
         if query.count("&") > 3:
             return False
         
+        parts = [part for part in path.split("/") if part]
+        for i in range(len(parts) - 2):
+            if parts[i] == parts[i + 1] == parts[i + 2]:
+                return False
+        
+        if any(trap_pattern in query for trap_pattern in [
+            "action=diff",
+            "action=history",
+            "version=",
+        ]):
+            return False
+        
         if "/~irus/twist/" in path and "/presentations/" in path:
             return False
 
@@ -77,6 +84,17 @@ def is_valid(url):
             if m and int(m.group(1)) > 3:
                 return False
         
+        # profile pages
+        if path.startswith("/people/") or path == "/people":
+            return False
+        
+        if netloc == "ics.uci.edu" and path.startswith("/~dhirschb/genealogy/"):
+            return False
+        
+        # open tickets in ics helpdesk
+        if netloc == "helpdesk.ics.uci.edu" and path.startswith("/ticket/"):
+            return False
+
         if "doku.php" in path and (
             "backup" in path
             or "backups" in path
@@ -85,6 +103,7 @@ def is_valid(url):
             or "revisions" in path
             or "diff" in path
             or "restore" in path
+            or "idx=" in query
         ):
             return False
 
@@ -111,3 +130,4 @@ def is_valid(url):
 
     except Exception:
         return False
+    
