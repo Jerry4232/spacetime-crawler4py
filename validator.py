@@ -1,3 +1,13 @@
+# validator.py
+"""
+low-information rule: 
+file extensions, login/comment/reply/restore pages, 
+calendars, revision/history/diff pages, 
+repeated path components, deep paths, slide/page families, 
+genealogy/helpdesk traps, and near-duplicate text families. 
+"""
+
+
 import re
 from urllib.parse import urlparse
 
@@ -31,7 +41,7 @@ def is_valid(url):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|xml|rss|atom"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
-            + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb|php)$",
+            + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb)$",
             path
         ):
             return False

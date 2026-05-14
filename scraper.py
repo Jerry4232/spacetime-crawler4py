@@ -23,11 +23,12 @@ def scraper(url, resp):
         raw_url = getattr(resp.raw_response, "url", None)
         resp_url = getattr(resp, "url", None)
         page_url = urldefrag(raw_url or resp_url or url)[0]
-        if is_valid(page_url):
-            with analytics_lock:
-                ANALYTICS.process_page(page_url, resp.raw_response.content)
+        if not is_valid(page_url):
+            return []
+        with analytics_lock:
+            ANALYTICS.process_page(page_url, resp.raw_response.content)
     except Exception:
-        pass
+        return []
     
     with duplicate_lock:
         if exact_duplicate(content, seen_hashes):
@@ -35,7 +36,7 @@ def scraper(url, resp):
         if near_duplicate(content, seen_fps, threshold=0.97):
             return []
         
-    links = extract_next_links(url, resp)
+    links = extract_next_links(page_url, resp)
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
