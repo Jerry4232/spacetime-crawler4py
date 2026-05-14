@@ -30,7 +30,8 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|xml|rss|atom"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$",
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
+            + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb|php$",
             path
         ):
             return False
@@ -47,14 +48,34 @@ def is_valid(url):
             if parts[i] == parts[i + 1] == parts[i + 2]:
                 return False
             
-        if re.search(r"/\d{4}/\d{1,2}/\d{1,2}", path):
-            return False
+        date_sep = r"[-/._]"
+        date_patterns = [
+            rf"\d{{4}}{date_sep}\d{{1,2}}{date_sep}\d{{1,2}}",  # YYYY-MM-DD
+            rf"\d{{1,2}}{date_sep}\d{{1,2}}{date_sep}\d{{4}}",  # MM-DD-YYYY
+            rf"(fall|winter|spring|summer){date_sep}\d{4}{date_sep}week{date_sep}\d+" # fall-2023-week-10
+
+        ]
+        for pattern in date_patterns:
+            if re.search(pattern, path) or re.search(pattern, query):
+                return False
 
         if "calendar" in path and ("month=" in query or "year=" in query):
             return False
 
         if query.count("&") > 3:
             return False
+        
+        if "/~irus/twist/" in path and "/presentations/" in path:
+            return False
+
+        if re.search(r"/presentations/.*(?:tsld|sld|slide|page)[-_]?\d+\.html?$", path):
+            return False
+        
+        if re.search(r"/page/\d+/?", path):
+            m = re.search(r"/page/(\d+)/?", path)
+            # Exclude paginated pages beyond page 3
+            if m and int(m.group(1)) > 3:
+                return False
         
         if "doku.php" in path and (
             "backup" in path
