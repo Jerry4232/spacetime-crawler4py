@@ -4,6 +4,11 @@ from validator import is_valid
 from analytics import Analytics
 from similarity import exact_duplicate, near_duplicate
 
+from threading import Lock
+
+duplicate_lock = Lock()
+analytics_lock = Lock()
+
 ANALYTICS = Analytics()
 
 seen_hashes = set()
@@ -15,19 +20,22 @@ def scraper(url, resp):
     
     content = resp.raw_response.content.decode("utf-8", errors="ignore")
 
-    if exact_duplicate(content, seen_hashes):
-        return []
+    content = resp.raw_response.content.decode("utf-8", errors="ignore")
 
-    # near duplicate
-    if near_duplicate(content, seen_fps, threshold=0.97):
-        return []
+    with duplicate_lock:
+        if exact_duplicate(content, seen_hashes):
+            return []
+
+        if near_duplicate(content, seen_fps, threshold=0.97):
+            return []
     
     try:
         raw_url = getattr(resp.raw_response, "url", None)
         resp_url = getattr(resp, "url", None)
         page_url = urldefrag(raw_url or resp_url or url)[0]
         if is_valid(page_url):
-            ANALYTICS.process_page(page_url, resp.raw_response.content)
+            with analytics_lock:
+                ANALYTICS.process_page(page_url, resp.raw_response.content)
     except Exception:
         pass
     
