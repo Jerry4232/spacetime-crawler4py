@@ -19,16 +19,6 @@ def scraper(url, resp):
         return []
     
     content = resp.raw_response.content.decode("utf-8", errors="ignore")
-
-    content = resp.raw_response.content.decode("utf-8", errors="ignore")
-
-    with duplicate_lock:
-        if exact_duplicate(content, seen_hashes):
-            return []
-
-        if near_duplicate(content, seen_fps, threshold=0.97):
-            return []
-    
     try:
         raw_url = getattr(resp.raw_response, "url", None)
         resp_url = getattr(resp, "url", None)
@@ -39,6 +29,12 @@ def scraper(url, resp):
     except Exception:
         pass
     
+    with duplicate_lock:
+        if exact_duplicate(content, seen_hashes):
+            return []
+        if near_duplicate(content, seen_fps, threshold=0.97):
+            return []
+        
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
