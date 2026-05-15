@@ -37,7 +37,7 @@ def is_valid(url):
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
             + r"|ps|eps|tex|ppt|pptx|pps|ppsx|pot|potx|doc|docx|xls|xlsx"
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|epub|dll|cnf|tgz|sha1|ova|vmdk|qcow2"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|xml|rss|atom"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
@@ -85,7 +85,7 @@ def is_valid(url):
         if "/~irus/twist/" in path and "/presentations/" in path:
             return False
 
-        if re.search(r"/presentations/.*(?:tsld|sld|slide|page)[-_]?\d+\.html?$", path):
+        if re.search(r"/(?:tsld|sld|slide|page)[-_]?\d+\.html?$", path):
             return False
         
         if re.search(r"/page/\d+/?", path):

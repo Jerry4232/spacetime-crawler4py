@@ -18,15 +18,19 @@ def scraper(url, resp):
     if not is_valid_response(resp):
         return []
     
-    content = resp.raw_response.content.decode("utf-8", errors="ignore")
+    content_bytes = resp.raw_response.content
+    if len(content_bytes) > 5_000_000:
+        return []
+
     try:
         raw_url = getattr(resp.raw_response, "url", None)
         resp_url = getattr(resp, "url", None)
         page_url = urldefrag(raw_url or resp_url or url)[0]
         if not is_valid(page_url):
             return []
+        content = content_bytes.decode("utf-8", errors="ignore")
         with analytics_lock:
-            ANALYTICS.process_page(page_url, resp.raw_response.content)
+            ANALYTICS.process_page(page_url, content_bytes)
     except Exception:
         return []
     
