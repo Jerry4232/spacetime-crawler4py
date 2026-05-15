@@ -18,11 +18,19 @@ class Worker(Thread):
         super().__init__(daemon=True)
 
     def run(self):
+        empty_retry_count = 0
+        max_empty_retries = 2 * self.config.threads_count
+
         while True:
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
+                empty_retry_count += 1
+                if empty_retry_count >= max_empty_retries:
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+                    break
+                time.sleep(1)
+                continue
+            empty_retry_count = 0
 
             resp = download(tbd_url, self.config, self.logger)
             self.logger.info(
