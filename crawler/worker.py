@@ -19,16 +19,16 @@ class Worker(Thread):
 
     def run(self):
         empty_retry_count = 0
-        max_empty_retries = 2 * self.config.threads_count
+        empty_retries = max(self.config.threads_count, 5)
 
         while True:
             tbd_url = self.frontier.get_tbd_url()
             if not tbd_url:
                 empty_retry_count += 1
-                if empty_retry_count >= max_empty_retries:
+                if empty_retry_count >= empty_retries:
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
-                time.sleep(1)
+                time.sleep(5)
                 continue
             empty_retry_count = 0
 
@@ -40,3 +40,4 @@ class Worker(Thread):
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
+

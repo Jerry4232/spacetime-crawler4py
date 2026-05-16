@@ -1,5 +1,7 @@
-import multiprocessing
-multiprocessing.set_start_method("fork", force=True)
+import platform
+if platform.system() != "Windows":
+    import multiprocessing
+    multiprocessing.set_start_method("fork", force=True)
 
 from configparser import ConfigParser
 from argparse import ArgumentParser
