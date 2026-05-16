@@ -1,12 +1,13 @@
 import os
 import shelve
+import glob
 
 from threading import RLock
 import time
 from urllib.parse import urlparse
 
 from utils import get_logger, get_urlhash, normalize
-from scraper import is_valid
+from validator import is_valid
 
 class Frontier(object):
     def __init__(self, config, restart):
@@ -25,7 +26,8 @@ class Frontier(object):
             # Save file does exists, but request to start from seed.
             self.logger.info(
                 f"Found save file {self.config.save_file}, deleting it.")
-            os.remove(self.config.save_file)
+            for f in glob.glob(self.config.save_file + "*"):
+                os.remove(f)
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)
         if restart:
