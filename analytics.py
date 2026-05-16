@@ -1,9 +1,11 @@
 # analytics.py
+import re
+import os
+import json
 
 from bs4 import BeautifulSoup
 from collections import Counter, defaultdict
 from urllib.parse import urlparse, urldefrag
-import re
 
 
 STOP_WORDS = {
@@ -40,6 +42,10 @@ class Analytics:
         self.longest_page_url = None
         self.longest_page_word_count = 0
 
+        self.report_dir = "report"
+        self.report_path = os.path.join(self.report_dir, "analytics.json")
+        os.makedirs(self.report_dir, exist_ok=True)
+
     def get_plain_text(self, html_content):
         soup = BeautifulSoup(html_content, "lxml")
 
@@ -75,7 +81,28 @@ class Analytics:
         subdomain = urlparse(url).netloc.lower()
         self.subdomain_urls[subdomain].add(url)
 
+        if len(self.unique_urls) % 500 == 0:
+            self.write_report()
+
+    def write_report(self):
+        data = {
+            "unique_pages": len(self.unique_urls),
+            "longest_page": {
+                "url": self.longest_page_url,
+                "word_count": self.longest_page_word_count
+            },
+            "top_50_words": self.word_counts.most_common(50),
+            "subdomains": {
+                subdomain: len(urls)
+                for subdomain, urls in sorted(self.subdomain_urls.items())
+            }
+        }
+
+        with open(self.report_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
     def print_report(self):
+        self.write_report()
         print("Unique pages:", len(self.unique_urls))
 
         print("Longest page:")
