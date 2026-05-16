@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urldefrag
-from validator import is_valid
+from validator import is_valid, is_valid_response
 from analytics import Analytics
 from similarity import exact_duplicate, near_duplicate
 
@@ -29,8 +29,6 @@ def scraper(url, resp):
         if not is_valid(page_url):
             return []
         content = content_bytes.decode("utf-8", errors="ignore")
-        with analytics_lock:
-            ANALYTICS.process_page(page_url, content_bytes)
     except Exception:
         return []
     
@@ -39,6 +37,9 @@ def scraper(url, resp):
             return []
         if near_duplicate(content, seen_fps, threshold=0.97):
             return []
+        
+    with analytics_lock:
+        ANALYTICS.process_page(page_url, content_bytes)
         
     links = extract_next_links(page_url, resp)
     return [link for link in links if is_valid(link)]
@@ -80,12 +81,3 @@ def extract_next_links(url, resp):
             result_links.add(clean_url)
     return list(result_links)
 
-
-def is_valid_response(resp):
-    return(
-        resp is not None
-        and resp.status == 200
-        and resp.raw_response is not None
-        and resp.raw_response.content is not None
-        and len(resp.raw_response.content) > 0
-    )
