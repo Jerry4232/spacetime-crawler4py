@@ -16,6 +16,7 @@ class Frontier(object):
         self.to_be_downloaded = list()
         self.lock = RLock() 
         self.domain_last_request = {}
+        self.last_request_time = 0
         
         if not os.path.exists(self.config.save_file) and not restart:
             # Save file does not exist, but request to load save.
@@ -57,32 +58,16 @@ class Frontier(object):
             with self.lock:
                 if not self.to_be_downloaded:
                     return None
-
                 now = time.monotonic()
-                earliest_wait = None
+                delay = float(self.config.time_delay)
+                elapsed = now - self.last_request_time
 
-                for i, url in enumerate(self.to_be_downloaded):
-                    domain = urlparse(url).netloc.lower()
-                    last_time = self.domain_last_request.get(domain, 0)
+                if elapsed >= delay:
+                    self.last_request_time = now
+                    return self.to_be_downloaded.pop(0)
 
-                    elapsed = now - last_time
-                    delay = float(self.config.time_delay)
-
-                    if elapsed >= delay:
-                        # Reserve this domain immediately before releasing lock.
-                        # This prevents another worker from taking same domain now.
-                        self.domain_last_request[domain] = now
-                        return self.to_be_downloaded.pop(i)
-
-                    wait_time = delay - elapsed
-                    if earliest_wait is None or wait_time < earliest_wait:
-                        earliest_wait = wait_time
-
-            # Do not hold the lock while sleeping.
-            if earliest_wait is not None:
-                time.sleep(earliest_wait)
-            else:
-                time.sleep(0.05)
+                wait_time = delay - elapsed
+            time.sleep(wait_time)
 
     def add_url(self, url):
         with self.lock:
