@@ -39,14 +39,17 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1|ova|vmdk|qcow2"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|xml|rss|atom"
+            + r"|xml|rss|atom|log|txt"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz"
             + r"|py|java|cpp|c|h|hpp|cs|ts|go|rb)$",
             path
         ):
             return False
         
-        bad_terms = ["login", "logout", "register", "reply", "comment", "restore"]
+        bad_login_terms = ["login", "logout", "register", "reply", "comment", "restore"]
+        bad_photo_terms = ["/pix/", "/gallery/"]
+        bad_terms = bad_login_terms + bad_photo_terms
+        
         if any(term in path or term in query for term in bad_terms):
             return False
         
@@ -92,6 +95,13 @@ def is_valid(url):
             m = re.search(r"/page/(\d+)/?", path)
             # Exclude paginated pages beyond page 3
             if m and int(m.group(1)) > 3:
+                return False
+            
+        if path.startswith("/~"):
+            # professor profile like eppstein, thornton, dechter, wscacchi etc. 
+            # often have deep paths
+            parts = [p for p in path.split("/") if p]
+            if len(parts) > 2:
                 return False
         
         if netloc == "ics.uci.edu" and path.startswith("/~dhirschb/genealogy/"):

@@ -4,7 +4,6 @@ import glob
 
 from threading import RLock
 import time
-from urllib.parse import urlparse
 
 from utils import get_logger, get_urlhash, normalize
 from validator import is_valid
