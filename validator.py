@@ -27,6 +27,18 @@ def is_valid(url):
             netloc == "stat.uci.edu" or netloc.endswith(".stat.uci.edu")
         ):
             return False
+        
+        BAD_SUBDOMAINS = {
+            "intranet.ics.uci.edu",
+            "password.ics.uci.edu",
+            "checkin.ics.uci.edu",
+            "myip.ics.uci.edu",
+            "speedtest.ics.uci.edu",
+            "signage.ics.uci.edu",
+        }
+
+        if netloc in BAD_SUBDOMAINS:
+            return False
 
         path = parsed.path.lower()
         query = parsed.query.lower()
@@ -46,7 +58,7 @@ def is_valid(url):
         ):
             return False
         
-        bad_login_terms = ["login", "logout", "register", "reply", "comment", "restore"]
+        bad_login_terms = ["login", "register", "restore"]
         bad_photo_terms = ["/pix/", "/gallery/"]
         bad_terms = bad_login_terms + bad_photo_terms
         
@@ -61,7 +73,6 @@ def is_valid(url):
             rf"\d{{4}}{date_sep}\d{{1,2}}{date_sep}\d{{1,2}}",  # YYYY-MM-DD
             rf"\d{{1,2}}{date_sep}\d{{1,2}}{date_sep}\d{{4}}",  # MM-DD-YYYY
             rf"(fall|winter|spring|summer){date_sep}\d{4}{date_sep}week{date_sep}\d+" # fall-2023-week-10
-
         ]
         for pattern in date_patterns:
             if re.search(pattern, path) or re.search(pattern, query):
